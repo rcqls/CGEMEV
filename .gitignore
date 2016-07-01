@@ -1,0 +1,13 @@
+src-*
+*~
+*.o
+*.so
+*.dylib
+*DEBUG
+*SAVE
+*.RData
+*.rds
+*.Rhistory
+*.tar.gz
+*.tgz
+..RCheck
