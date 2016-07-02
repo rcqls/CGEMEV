@@ -3,11 +3,12 @@ grid <- function(dim) {
   # TODO
 }
 
-# model
-cor.matern.matrix <- function(theta,b) { #notation ref à l'article de Didier
+# matrix (only called when size od$f sites is reasonable)
+cor.matern.matrix <- function(sites,theta,b) { #notation ref à l'article de Didier
 
 }
 
+# model
 matern.cov.field <- function(nu,theta,b=1) { # contructor
   obj <- list(nu=nu,theta=theta,b=b)
   class(obj) <- "matern.cov.field"
@@ -17,7 +18,7 @@ matern.cov.field <- function(nu,theta,b=1) { # contructor
 # simulation
 
 simulate.matern.cov.field <- function(n,sites=grid(c(100,100)),missing.sites) {
-## z=b^(.5)L^Tw (ou version sans calcul de R ni de L => circulante embedding....)
+## z=b^(.5)L^Tw (ou version sans calcul de R ni de L => circulante embedding but only for grid !!!!)
 ## return z
 }
 
