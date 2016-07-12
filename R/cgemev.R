@@ -45,7 +45,7 @@ init.preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,indexColum
   library(pdist)
 	indexOfPixelInZ <- arrayOfIndicesOfObservationInVectorZ[indexRowInGrid, indexColumnInGrid]
 #
-	if (! array.listOfPixels.in.OneOfTheDisks[ indexRowInGrid, indexColumnInGrid ]) {
+####	if (! array.listOfPixels.in.OneOfTheDisks[ indexRowInGrid, indexColumnInGrid ]) {
 #ceci marche aussi :  	(! indexOfPixelInZ ==0)
 #(! listOfPixels.in.OneOfTheDisks[  ])
 		 	#print(indexOfPixelInZ)
@@ -69,12 +69,12 @@ init.preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,indexColum
 			  }
 		#i  <- rep(indexOfPixelInZ, length.listPi)
 		#new.speededG [cbind(i, j)] <-  gi
-}
+####}
 list(i=indexOfPixelInZ,j=j,g=gi,l=length.listPi)
 }
 
 
-preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
+preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPixels.in.OneOfTheDisks,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
   sparceG <-  spam(0, n, n)
   entriesRaw<-c()
   colindicesRaw<-c()
