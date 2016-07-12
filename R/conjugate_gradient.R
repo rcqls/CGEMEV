@@ -2,8 +2,7 @@
 # Copyright 2004-2007, Institute for Mathematics Applied Geosciences
 # University Corporation for Atmospheric Research
 # Licensed under the GPL -- www.gpl.org/licenses/gpl.html
-"conjugate.gradient" <- function(b, multAx, start, 
-    tol = 1e-05, kmax = 25, verbose = TRUE, ...) {
+conjugate.gradient <- function(b, multAx, start, tol = 1e-05, kmax = 25, verbose = TRUE, ...) {
     call <- match.call()
     x <- start
     r <- b - multAx(x, ...)
@@ -23,16 +22,19 @@
         alpha <- rho[1 + (k - 1)]/(sum(p * w))
         x <- x + alpha * p
         r <- r - alpha * w
+        #print(sum(x * b)/length(b))
         rho[1 + k] <- sum(r^2)
         if (verbose) {
-            cat("iter", k, " crit : ", signif(sqrt(rho[1 + k]), 
+            cat("iter", k, " crit : ", signif(sqrt(rho[1 + k]),
                 4), signif(test, 4), fill = TRUE)
         }
-        if (sqrt(rho[1 + k]) < test) {
+        if
+        (sqrt(rho[1 + k]) < test) {
             niter <- k + 1
             break
         }
     }
-    list(call = call, x = x, residuals = r, niter, conv = list(rho = rho, 
+    #print("  ")
+    list(call = call, x = x, residuals = r, niter, conv = list(rho = rho,
         test = test, maxiter = kmax, niter = niter))
 }
