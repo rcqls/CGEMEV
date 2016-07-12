@@ -75,7 +75,7 @@ list(i=indexOfPixelInZ,j=j,g=gi,l=length.listPi)
 
 
 preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
-  newMoreMoreSpeeded.G.efficientComput <-  spam(0, n, n)
+  sparceG <-  spam(0, n, n)
   entriesRaw<-c()
   colindicesRaw<-c()
   rowpointersRaw <-c(1)
@@ -123,10 +123,11 @@ preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,grid.size=c(256
     }
   }
 
-  newMoreMoreSpeeded.G.efficientComput@entries <- entriesRaw
-  newMoreMoreSpeeded.G.efficientComput@colindices <- as.integer(colindicesRaw)
-  newMoreMoreSpeeded.G.efficientComput@rowpointers <- as.integer(rowpointersRaw)
-#			newMoreMoreSpeeded.G.efficientComput[cbind(as.integer(colindicesRaw), as.integer(rowpointersRaw))] <-  entriesRaw
+  sparceG@entries <- entriesRaw
+  sparceG@colindices <- as.integer(colindicesRaw)
+  sparceG@rowpointers <- as.integer(rowpointersRaw)
+#			sparceG[cbind(as.integer(colindicesRaw), as.integer(rowpointersRaw))] <-  entriesRaw
+sparceG
 }
 
 cgemev <- function(z,missing.sites,tol.bissection=1e-4,tol.pcg=1e-4) {
