@@ -23,6 +23,7 @@ grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim
 
   ## everything done here!!!
 	update(obj)
+  
 	obj
 }
 
@@ -98,7 +99,7 @@ preconditionning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5
       gTildai <-  solve(subR, vectorEmi)
       gi <-   gTildai/sqrt(gTildai[length.listPi])
     }
-    list(i=iz,j=j,g=gi,l=length.listPi)
+    list(i=iz,j=j,g=gi,l=length.listPi,irow=irow,icol=icol)
   }
 
   ## init sparse matrix
@@ -120,7 +121,7 @@ preconditionning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5
 
         if(is.null(first.precond)) first.precond <- first.preconditioning()
 
-        j  <- obj$z[first.precond$j +  rep(( irow  - 3) + obj$n1*(icol - 3),  first.precond$l)]
+        j  <- obj$z[first.precond$j +  rep(( irow  - first.precond$irow) + obj$n1*(icol - first.precond$icol),  first.precond$l)]
     	  length.listPi <- length(j)
     	  i  <- rep(iz, length.listPi)
     	  gi <- first.precond$g

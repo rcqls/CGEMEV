@@ -30,7 +30,7 @@ length(z)
 sum(z**2)/ex1.gd$non.missing.number
 
 
-transpOfG <-  t(ex1.gd$sparseG)
+#transpOfG <-  t(ex1.gd$sparseG)
 candidateThetas.Grid <- (10.) * 10**seq(-1.1,1.1,,15)
 
-(out <- fsai11Precond.GEevalOnThetaGrid(z, candidateThetas.Grid, ex1.gm$smoothness, ex1.gd ,tolPGC=1e-03))
+#(out <- fsai11Precond.GEevalOnThetaGrid(z, candidateThetas.Grid, ex1.gm$smoothness, ex1.gd ,tolPGC=1e-03))
