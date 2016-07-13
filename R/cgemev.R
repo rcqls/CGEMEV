@@ -22,103 +22,81 @@ simulate.matern.cov.field <- function(n,sites=grid(c(100,100)),missing.sites) {
 ## return z
 }
 
-## Example
-# ex.mat <- matern.cov.model(.5,1)
-# simulate(ex.mat,500000)
 
-## Estimation of theta and b
-
-# listOfPixels.in.OneOfTheDisks  <- listOfbelong.to.OneOfTheDisks
-# #
-# prov <-  listOfPixels.in.OneOfTheDisks
-# arrayOfIndicesOfObservationInVectorZ  <-
-# expand.to.fullGrid(n1,1:length(prov[!prov]), prov)
-# #
-# array.listOfPixels.in.OneOfTheDisks   <- matrix(listOfPixels.in.OneOfTheDisks,ncol=n1)
-# #
-# array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks   <- matrix(listOfDistantEnoughPixels.from.BoundaryAndTheDisks,ncol=n1)
-# listOfIndicesOfObservationInVectorZ <- c(arrayOfIndicesOfObservationInVectorZ)
-# #
 ################# precomputations : ##########
-init.preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,indexColumnInGrid,indexRowInGrid,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
-  ## TODO: extend grid.size[1] grid.size[2]
-  library(pdist)
-	indexOfPixelInZ <- arrayOfIndicesOfObservationInVectorZ[indexRowInGrid, indexColumnInGrid]
-#
-####	if (! array.listOfPixels.in.OneOfTheDisks[ indexRowInGrid, indexColumnInGrid ]) {
-#ceci marche aussi :  	(! indexOfPixelInZ ==0)
-#(! listOfPixels.in.OneOfTheDisks[  ])
-		 	#print(indexOfPixelInZ)
-			listPi <- as.vector(pdist(	observationSitesWithMissingDisk[indexOfPixelInZ,],
-			observationSitesWithMissingDisk)@dist)<(precond.bandwidth/grid.size[1])    #!!!!!!! magic !!!!
-		 if (indexOfPixelInZ <n)  listPi[(indexOfPixelInZ +1):n] <- FALSE
-		 j <-  which(listPi)
-			#subR <-  Matern(rdist(j),nu=0.5,range=1)
-			#
-		 if   (  length(j)==1)
-			{i <- indexOfPixelInZ
-				gi <-  1
-				}
-		 else
-			{  #subR <-  exp(- rdist(observationSitesWithMissingDisk[j,]))
-				subR <-  Matern(rdist(observationSitesWithMissingDisk[j,]), nu=nu, range=range)
-			length.listPi <- length(j)
-			vectorEmi <- c(rep(0,length.listPi -1),1)
-			gTildai <-  solve(subR, vectorEmi)
-			 gi <-   gTildai/sqrt(gTildai[length.listPi])
-			  }
-		#i  <- rep(indexOfPixelInZ, length.listPi)
-		#new.speededG [cbind(i, j)] <-  gi
-####}
-list(i=indexOfPixelInZ,j=j,g=gi,l=length.listPi)
-}
+
 
 
 #### INPUTS
-## arrayOfIndicesOfObservationInVectorZ
-## listOfIndicesOfObservationInVectorZ
-## array.listOfPixels.in.OneOfTheDisks
-## array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks
-preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPixels.in.OneOfTheDisks,array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
-  sparseG <-  spam(0, n, n)
+## arrayOfIndicesOfObservationInVectorZ -> obj$z
+## array.listOfPixels.in.OneOfTheDisks -> obj$missing.sites
+## array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks -> obj$distant.sites
+
+preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
+  library(pdist)
+  library(fields)
+
+  # function with no arguments since all variables inside inherited from the parent environment
+  # only for code more readable
+  first.preconditioning <- function()  {
+    iz <- obj$z[irow, icol]
+
+  	listPi <- as.vector(pdist(	obj$non.missing.coords[iz,],
+  	obj$non.missing.coords)@dist)<(precond.bandwidth/grid.size[1])    #!!!!!!! magic !!!!
+    if (iz <n)  listPi[(iz +1):n] <- FALSE
+    j <-  which(listPi)
+    #subR <-  Matern(rdist(j),nu=0.5,range=1)
+    #
+    if(length(j)==1) {
+      i <- iz
+    	gi <-  1
+    } else {
+      #subR <-  exp(- rdist(obj$non.missing.coords[j,]))
+    	subR <-  Matern(rdist(obj$non.missing.coords[j,]), nu=nu, range=range)
+      length.listPi <- length(j)
+      vectorEmi <- c(rep(0,length.listPi -1),1)
+      gTildai <-  solve(subR, vectorEmi)
+      gi <-   gTildai/sqrt(gTildai[length.listPi])
+    }
+    list(i=iz,j=j,g=gi,l=length.listPi)
+  }
+
+  ## init sparse matrix
+  sparseG <-  spam(0, obj$non.missing.number, obj$non.missing.number)
   entriesRaw<-c()
   colindicesRaw<-c()
   rowpointersRaw <-c(1)
-  n1 <- grid.size[1]
+
   first.precond <- NULL #found when first condition satisfied
 
-  ## IS IT VERY USEFUL: A matrix is a vector!!!!
-  listOfIndicesOfObservationInVectorZ <- arrayOfIndicesOfObservationInVectorZ
+  for(icol in 1:obj$grid.size[2]) for(irow in 1:obj$grid.size[1])  {
+  	iz <- obj$z[irow, icol]
 
-  for(indexColumnInGrid in 1:n1) for(indexRowInGrid in 1:n1)  {
-  	indexOfPixelInZ <- arrayOfIndicesOfObservationInVectorZ[indexRowInGrid, indexColumnInGrid]
-  #
-    if  (! array.listOfPixels.in.OneOfTheDisks[ indexRowInGrid, indexColumnInGrid ]) {
-      #	(! indexOfPixelInZ ==0)
+    if  (! obj$missing.sites[ irow, icol ]) {
+      #	(! iz ==0)
       #(! listOfPixels.in.OneOfTheDisks[  ])
-      if (array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks[ indexRowInGrid, indexColumnInGrid ]) {
-        #print(c("row=",indexRowInGrid,"comumn=", indexColumnInGrid))
-        if(is.null(first.precond)) first.precond <- init.preconditioning(arrayOfIndicesOfObservationInVectorZ,indexRowInGrid, indexColumnInGrid,grid.size,nu,range,precond.bandwidth)
+      if (obj$distant.sites[ irow, icol ]) {
+        #print(c("row=",irow,"comumn=", icol))
+        if(is.null(first.precond)) first.precond <- first.preconditioning()
 
-        j  <- listOfIndicesOfObservationInVectorZ[first.precond$j +  rep(( indexRowInGrid  - 3) +
-        	       n1*(indexColumnInGrid - 3),  first.precond$l)]
+        j  <- obj$z[first.precond$j +  rep(( irow  - 3) + obj$n1*(icol - 3),  first.precond$l)]
     	  length.listPi <- length(j)
-    	  i  <- rep(indexOfPixelInZ, length.listPi)
+    	  i  <- rep(iz, length.listPi)
     	  gi <- first.precond$g
-      } else { 	#print(indexOfPixelInZ)
-  				listPi <- as.vector(pdist(	observationSitesWithMissingDisk[indexOfPixelInZ,],
-  	#			observationSitesWithMissingDisk[max(1, indexOfPixelInZ - 2*n1 - 2):min(n, indexOfPixelInZ + 2*n1 + 2)])@dist)<(2.5/n1)
-  				observationSitesWithMissingDisk[max(1, indexOfPixelInZ - 2*n1 - 2): indexOfPixelInZ,])@dist)<(2.5/n1)     #!!!!!!! magic !!!!
+      } else { 	#print(iz)
+  				listPi <- as.vector(pdist(	obj$non.missing.coords[iz,],
+  	#			obj$non.missing.coords[max(1, iz - 2*obj$n1 - 2):min(n, iz + 2*obj$n1 + 2)])@dist)<(2.5/obj$n1)
+  				obj$non.missing.coords[max(1, iz - 2*obj$n1 - 2): iz,])@dist)<(precond.bandwidth/obj$n1)     #!!!!!!! magic !!!!
   				#
-  			  #if (indexOfPixelInZ <n)  listPi[(indexOfPixelInZ +1):n] <- FALSE
+  			  #if (iz <n)  listPi[(iz +1):n] <- FALSE
   			  j <-  which(listPi)
-  			  j <-  j  +  max(1, indexOfPixelInZ - 2*n1 - 2) -1
+  			  j <-  j  +  max(1, iz - 2*obj$n1 - 2) -1
   			  if   (  length(j)==1  ) {
-            i <- indexOfPixelInZ
+            i <- iz
   				  gi <-  1
   				  length.listPi <- 1
-          } else {  #subR <-  exp(- rdist(observationSitesWithMissingDisk[j,]))
-  				      subR <-  Matern(rdist(observationSitesWithMissingDisk[j,]), nu=0.5, range=1)
+          } else {  #subR <-  exp(- rdist(obj$non.missing.coords[j,]))
+  				      subR <-  Matern(rdist(obj$non.missing.coords[j,]), nu=nu, range=range)
                 length.listPi <- length(j)
                 vectorEmi <- c(rep(0,length.listPi -1),1)
                 gTildai <-  solve(subR, vectorEmi)
