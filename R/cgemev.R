@@ -74,7 +74,11 @@ list(i=indexOfPixelInZ,j=j,g=gi,l=length.listPi)
 }
 
 
-preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPixels.in.OneOfTheDisks,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
+#### INPUTS
+## arrayOfIndicesOfObservationInVectorZ
+## array.listOfPixels.in.OneOfTheDisks
+## array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks
+preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPixels.in.OneOfTheDisks,array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
   sparceG <-  spam(0, n, n)
   entriesRaw<-c()
   colindicesRaw<-c()
