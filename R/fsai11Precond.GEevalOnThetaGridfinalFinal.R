@@ -8,16 +8,17 @@ fsai11Precond.GEevalOnThetaGrid <- function(z,candidateThetas1DGrid,nu=0.5,grid.
   GEvaluesOnthegrid<- matrix(NA,length(candidateThetas1DGrid))
   #trace.term<- matrix(NA,length(candidateThetas1DGrid))
   niter <- matrix(NA,length(candidateThetas1DGrid),2)
-  n=length(z)
+  if(grid.domain$non.missing.number != length(z)) stop("Not proper length of z!")
+  n <- length(z)
   DeltaTy <-   sparseG  %*%  z
   ##########################
   # the matrice-vector product required by conjugate.gradient:
   bEV<-sum(z**2)/n
-  viaFFTwithMissings.prod.DeltaTCorrelDelta.Timesx <- function( x) {
+  viaFFTwithMissings.prod.DeltaTCorrelDelta.Timesx <- function(x) {
     x <- transOfSparseG   %*%  x
-    xprovFull<- expand.to.fullGrid(n1,  x, listOf.belongTo.OneOfTheDisks)
+    xprovFull<- expand.to.fullGrid(n1,  x, grid.domain$missing.sites)
     result<- c( stationary.image.cov(Y= xprovFull,cov.obj=cov.obj) )
-    result<-  sparseG %*%  result[! listOf.belongTo.OneOfTheDisks]
+    result<-  sparseG %*%  result[! grid.domain$missing.sites]
     result
   }
   ##########################
