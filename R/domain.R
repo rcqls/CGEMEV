@@ -23,7 +23,7 @@ grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim
 
   ## everything done here!!!
 	update(obj)
-  
+
 	obj
 }
 
@@ -39,7 +39,7 @@ update.grid.domain <-function(obj) {
 missing.sites.grid.domain <- function(obj) {
 	n1Xn1  <- obj$n1*obj$n1
 	missing.sites <- rep(FALSE,  n1Xn1)
-	for(indexPixel in 1:n1Xn1) for(id in 1:obj$n.domains) missing.sites[indexPixel] <- missing.sites[indexPixel] | any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$half.center,obj$missing.domains[[id]]$radius^2 ))
+	for(indexPixel in 1:n1Xn1) for(id in 1:obj$n.domains) missing.sites[indexPixel] <- missing.sites[indexPixel] | any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$center,obj$missing.domains[[id]]$radius^2 ))
 	# OLD: listOfbelong.to.OneOfTheDisks. Rmk: matrix in R can be used as a vector since it is actually a vector
 	obj$missing.sites <- matrix(missing.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
 }
@@ -47,15 +47,19 @@ missing.sites.grid.domain <- function(obj) {
 distant.sites.grid.domain <- function(obj) {
 	n1Xn1  <- obj$n1*obj$n1
 
-	roundHalfWidth  <-  round(obj$oversampling.size/obj$n1)
-	halfWidthNeighborood  <-  obj$oversampling.size/obj$n1
-	augmentedRadius  <-  sapply(obj$missing.domains,function(md) md$half.center + halfWidthNeighborood)
 
+	halfWidthNeighborood  <-  obj$oversampling.size/obj$n1
+	augmentedRadius  <-  sapply(obj$missing.domains,function(md) md$radius + halfWidthNeighborood)
+
+  roundHalfWidth  <-  round(obj$oversampling.size)
 	distant.sites <- rep(FALSE,  n1Xn1)
 	for(i in (roundHalfWidth+1):(obj$n1-roundHalfWidth)) for(j in (roundHalfWidth+1):(obj$n1-roundHalfWidth))  {
 		indexPixel <- j + (i-1)*obj$n1
-		for(id in 1:obj$n.domains) distant.sites[indexPixel] <- distant.sites[indexPixel] | !any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$half.center,augmentedRadius[id]^2 ))
+    tmp <- TRUE
+		for(id in 1:obj$n.domains) tmp <- tmp & !any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$center,augmentedRadius[id]^2 ))
+    distant.sites[indexPixel] <- tmp
 	}
+  
 	# OLD: listOfDistantEnoughPixels.from.BoundaryAndTheDisks
 	obj$distant.sites <- matrix(distant.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
 }
