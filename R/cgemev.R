@@ -76,15 +76,19 @@ list(i=indexOfPixelInZ,j=j,g=gi,l=length.listPi)
 
 #### INPUTS
 ## arrayOfIndicesOfObservationInVectorZ
+## listOfIndicesOfObservationInVectorZ
 ## array.listOfPixels.in.OneOfTheDisks
 ## array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks
 preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPixels.in.OneOfTheDisks,array.listOfDistantEnoughPixels.from.BoundaryAndTheDisks,grid.size=c(256,256),nu=.5,range=1,precond.bandwidth=2.5)  {
-  sparceG <-  spam(0, n, n)
+  sparseG <-  spam(0, n, n)
   entriesRaw<-c()
   colindicesRaw<-c()
   rowpointersRaw <-c(1)
   n1 <- grid.size[1]
   first.precond <- NULL #found when first condition satisfied
+
+  ## IS IT VERY USEFUL: A matrix is a vector!!!!
+  listOfIndicesOfObservationInVectorZ <- arrayOfIndicesOfObservationInVectorZ
 
   for(indexColumnInGrid in 1:n1) for(indexRowInGrid in 1:n1)  {
   	indexOfPixelInZ <- arrayOfIndicesOfObservationInVectorZ[indexRowInGrid, indexColumnInGrid]
@@ -127,11 +131,14 @@ preconditioning <- function(arrayOfIndicesOfObservationInVectorZ,array.listOfPix
     }
   }
 
-  sparceG@entries <- entriesRaw
-  sparceG@colindices <- as.integer(colindicesRaw)
-  sparceG@rowpointers <- as.integer(rowpointersRaw)
-#			sparceG[cbind(as.integer(colindicesRaw), as.integer(rowpointersRaw))] <-  entriesRaw
-sparceG
+  sparseG@entries <- entriesRaw
+  sparseG@colindices <- as.integer(colindicesRaw)
+  sparseG@rowpointers <- as.integer(rowpointersRaw)
+
+  # Alternative:
+  # If rowindicesRaw instead of rowpointersRaw
+  # sparseG[cbind(as.integer(colindicesRaw), as.integer(rowindicesRaw))] <-  entriesRaw
+  sparseG
 }
 
 cgemev <- function(z,missing.sites,tol.bissection=1e-4,tol.pcg=1e-4) {
