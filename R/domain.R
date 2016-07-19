@@ -1,6 +1,6 @@
 
 
-grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim=2) {
+grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim=2,...) {
   require(spam)
 	obj <- new.env()
 	obj$missing.domains <- missing.domains # disk only now! TODO: extend to any form of domain
@@ -22,19 +22,18 @@ grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim
   class(obj) <- "grid.domain"
 
   ## everything done here!!!
-	update(obj)
+	update(obj,...)
 
 	obj
 }
 
-update.grid.domain <-function(obj) {
+update.grid.domain <-function(obj,Rcpp=TRUE) {
 	missing.sites.grid.domain(obj)
 	distant.sites.grid.domain(obj)
 	non.missing.coords.grid.domain(obj)
 	non.missing.number.grid.domain(obj)
   expand.to.full.grid.domain(obj)
-  preconditioning4.grid.domain(obj)
-  preconditioning.grid.domain(obj)
+  print(system.time(if(Rcpp) preconditioningCpp.grid.domain(obj) else preconditioningR.grid.domain(obj)))
 }
 
 missing.sites.grid.domain <- function(obj) {
@@ -300,7 +299,7 @@ preconditioning.info <- function(obj,first.precond,first.preconditioning,nu,rang
 }
 
 # VERSION 3 (with preconditioning.info)
-preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
+preconditioningR.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
   library(pdist)
   library(fields)
 
@@ -349,7 +348,7 @@ preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)
 }
 
 # VERSION 4 (with preconditioning_info C++)
-preconditioning4.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
+preconditioningCpp.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
   library(pdist)
   library(fields)
 

@@ -107,28 +107,31 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
           // subR=matern(distSites,range,nu);
 
           arma::mat subR(length_listPi,length_listPi);
-          printf("length_listPi=%d,dist=",length_listPi);
+          //printf("length_listPi=%d,dist=",length_listPi);
           for(int k1=0;k1<length_listPi;k1++) {
             for(int k2=0;k2<k1;k2++) {
               double d=sqrt(sum(pow(non_missing_coords(j[k1]-1,_)-non_missing_coords(j[k2]-1,_),2)));
-              printf("(%d,%d)=(%lf,",j[k1]-1,j[k2]-1,d);
+              //printf("(%d,%d)=(%lf,",j[k1]-1,j[k2]-1,d);
               double val=matern(d,range,nu);
-              printf("%lf) ",val);
+              //printf("%lf) ",val);
               subR(k1,k2) = val;
               subR(k2,k1) = val;
             }
             subR(k1,k1)=1; //If I am not mistaken!
           }
-          printf("\n");
+          //printf("\n");
 
-          arma::colvec vectorEmi(length_listPi);
-          vectorEmi[length_listPi-1]=1;
+          arma::vec vectorEmi=arma::zeros(length_listPi);
+          vectorEmi(length_listPi-1)=1;
+          //printf("emi=(");for(int k=0;k<length_listPi;k++) printf("%lf,",vectorEmi(k));printf(")\n");
           //Armadillo
           //arma::vec gTildai=arma::inv(subR) * vectorEmi;
           arma::vec gTildai=arma::solve(subR,vectorEmi);
+          //printf("gTilde=(");for(int k=0;k<length_listPi;k++) printf("%lf,",gTildai(k));printf(")\n");
           gi.resize(length_listPi);
-          double sqrtGTildaiLast=sqrt(gTildai[length_listPi-1]);
+          double sqrtGTildaiLast=sqrt(gTildai(length_listPi-1));
           for(int k=0;k<length_listPi;k++) gi[k]=gTildai(k)/sqrtGTildaiLast;
+          //printf("sqrtGTildaiLast=%lf,gi=(",sqrtGTildaiLast);for(int k=0;k<length_listPi;k++) printf("%lf,",gi[k]);printf(")\n");
           // //To normalize
           // gi <- gTildai/Math.sqrt(gTildai[length_listPi-1]);
     		}
