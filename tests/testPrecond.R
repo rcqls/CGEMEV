@@ -32,4 +32,5 @@ sum(z**2)/ex1.gd$non.missing.number
 
 candidateThetas.Grid <- 1/gm$range * 10**seq(-1.1,1.1,,15)
 
-(out <- fsai11Precond.GEevalOnThetaGrid(z, candidateThetas.Grid, gm$smoothness, ex1.gd ,tolPGC=1e-03))
+print("iciiiiii")
+print(out <- fsai11Precond.GEevalOnThetaGrid(z, candidateThetas.Grid, gm$smoothness, ex1.gd ,tolPGC=1e-03))

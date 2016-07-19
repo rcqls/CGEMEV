@@ -244,7 +244,7 @@ for(icol in 1:obj$grid.size[2]) for(irow in 1:obj$grid.size[1]) {
   sparseG@entries <- entriesRaw
   sparseG@colindices <- as.integer(colindicesRaw)
   sparseG@rowpointers <- as.integer(rowpointersRaw)
-  print(list(entriesRaw,as.integer(colindicesRaw),as.integer(rowpointersRaw)))
+  obj$tmp.index <- list(entriesRaw,as.integer(colindicesRaw),as.integer(rowpointersRaw))
 
   # Alternative:
   # If rowindicesRaw instead of rowpointersRaw
@@ -278,12 +278,12 @@ preconditioning.info <- function(obj,first.precond,first.preconditioning,nu,rang
           gi <- 1
           length.listPi <- 1
     		} else {  
-          # subR <- Matern(rdist(obj$non.missing.coords[j,]), nu=nu, range=range)
-          # length.listPi <- length(j)
+          subR <- Matern(rdist(obj$non.missing.coords[j,]), nu=nu, range=range)
+          length.listPi <- length(j)
           vectorEmi <- c(rep(0,length.listPi -1),1)
-          # gTildai <- solve(subR, vectorEmi)
-          # gi <- gTildai/sqrt(gTildai[length.listPi])
-          gi <- vectorEmi
+          gTildai <- solve(subR, vectorEmi)
+          gi <- gTildai/sqrt(gTildai[length.listPi])
+
     		}
 
     	}
@@ -298,7 +298,7 @@ preconditioning.info <- function(obj,first.precond,first.preconditioning,nu,rang
   return(list(entriesRaw,colindicesRaw,rowpointersRaw))
 }
 
-VERSION 3 (with preconditioning.info)
+# VERSION 3 (with preconditioning.info)
 preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
   library(pdist)
   library(fields)
@@ -336,11 +336,10 @@ preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)
   first.precond <- NULL #found when first condition satisfied
   #cumlength.listPi <- 1
 
-  tmp <- preconditioning.info(obj,first.precond,first.preconditioning,nu,range,precond.bandwidth)
-print(tmp)
-  sparseG@entries <- tmp[[1]]
-  sparseG@colindices <- as.integer(tmp[[2]])
-  sparseG@rowpointers <- as.integer(tmp[[3]])
+  obj$tmp2.index <- preconditioning.info(obj,first.precond,first.preconditioning,nu,range,precond.bandwidth)
+  sparseG@entries <- obj$tmp2.index[[1]]
+  sparseG@colindices <- as.integer(obj$tmp2.index[[2]])
+  sparseG@rowpointers <- as.integer(obj$tmp2.index[[3]])
 
   # Alternative:
   # If rowindicesRaw instead of rowpointersRaw
