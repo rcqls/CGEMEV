@@ -33,6 +33,7 @@ update.grid.domain <-function(obj) {
 	non.missing.coords.grid.domain(obj)
 	non.missing.number.grid.domain(obj)
   expand.to.full.grid.domain(obj)
+  preconditioning4.grid.domain(obj)
   preconditioning.grid.domain(obj)
 }
 
@@ -340,6 +341,55 @@ preconditioning.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)
   sparseG@entries <- obj$tmp2.index[[1]]
   sparseG@colindices <- as.integer(obj$tmp2.index[[2]])
   sparseG@rowpointers <- as.integer(obj$tmp2.index[[3]])
+
+  # Alternative:
+  # If rowindicesRaw instead of rowpointersRaw
+  # sparseG[cbind(as.integer(colindicesRaw), as.integer(rowindicesRaw))] <-  entriesRaw
+  obj$sparseG <- sparseG
+}
+
+# VERSION 4 (with preconditioning_info C++)
+preconditioning4.grid.domain <- function(obj,nu=.5,range=1,precond.bandwidth=2.5)  {
+  library(pdist)
+  library(fields)
+
+  # function with no arguments since all variables inside inherited from the parent environment
+  # only for code more readable
+	first.preconditioning <- function(irow,icol) {
+	iz <- obj$z[irow, icol]
+	listPi <- as.vector(pdist( obj$non.missing.coords[iz,], obj$non.missing.coords)@dist)<(precond.bandwidth/obj$grid.size[1]) #!!!!!!! magic !!!!
+	if (iz < obj$non.missing.number) listPi[(iz +1):obj$non.missing.number] <- FALSE
+	j <- which(listPi)
+	#
+	length.listPi <- length(j)
+	if(length.listPi==1) {
+	i <- iz
+	gi <- 1
+	} else {
+	#subR <- exp(- rdist(obj$non.missing.coords[j,]))
+	subR <- Matern(rdist(obj$non.missing.coords[j,]), nu=nu, range=range)
+	vectorEmi <- c(rep(0,length.listPi -1),1)
+	gTildai <- solve(subR, vectorEmi)
+	gi <- gTildai/sqrt(gTildai[length.listPi])
+	}
+	lag.coords.listPi <- round((obj$n1-1)*obj$non.missing.coords[j,])-matrix(c(rep(irow,length.listPi),rep(icol,length.listPi)),ncol=2)
+	list(i=iz,lag.coords.listPi=lag.coords.listPi,g=gi,l=length.listPi)
+	}
+
+
+  ## init sparse matrix
+  sparseG <-  spam(0, obj$non.missing.number, obj$non.missing.number)
+  # entriesRaw<-c()
+  # colindicesRaw<-c()
+  # rowpointersRaw <- c(1) #sparseG@rowpointers
+
+  #first.precond <- NULL #found when first condition satisfied
+  #cumlength.listPi <- 1
+
+  obj$tmp4.index <- preconditioning_info(obj,first.preconditioning,nu,range,precond.bandwidth)
+  sparseG@entries <- obj$tmp4.index[[1]]
+  sparseG@colindices <- as.integer(obj$tmp4.index[[2]])
+  sparseG@rowpointers <- as.integer(obj$tmp4.index[[3]])
 
   # Alternative:
   # If rowindicesRaw instead of rowpointersRaw

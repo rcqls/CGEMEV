@@ -22,6 +22,9 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
   rowpointersRaw.push_back(1);
   int is_first_precond=true;
   List first_precond;
+  NumericVector first_precond_g;
+  NumericMatrix first_precond_lags;
+  int first_precond_lags_size;
 
   int iz,length_listPi;
   std::vector<double> gi;
@@ -31,32 +34,46 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
   NumericMatrix z=obj["z"];
   LogicalMatrix missing_sites=obj["missing.sites"],distant_sites=obj["distant.sites"];
   NumericMatrix non_missing_coords=obj["non.missing.coords"];
+
   int n1=obj["n1"];
 
   double dmax=precond_bandwidth/(double)n1;
 
   for(icol=0;icol<grid_size[1];icol++) for(irow=0;irow<grid_size[0];irow++) {
     iz=z(irow, icol)-1;
+    //printf("iz=%d\n",iz);
+    //printf("missing_sites(irow, icol)=%d\n",missing_sites(irow, icol));
+    //printf("distant_sites(irow, icol)=%d\n",distant_sites(irow, icol));
     if (!missing_sites(irow, icol)) {
     	if (distant_sites(irow, icol)) {
+        //printf("iciiiiiiiiii\n");
     		if(is_first_precond) {
           is_first_precond=false;
-          first_precond=first_preconditioning(irow,icol);
+          first_precond=first_preconditioning(irow+1,icol+1);
+          first_precond_g=first_precond["g"];
+          first_precond_lags=as<NumericMatrix>(first_precond["lag.coords.listPi"]);
+          first_precond_lags_size = first_precond_lags.nrow();
         }
          
         length_listPi=first_precond["l"];
-        NumericMatrix first_precond_lags=first_precond["lag.coords.listPi"];
+        //printf("length_listPi=%d\n",length_listPi);
+
         //TODO ==> DONE
         // j <- z[first_precond[[lag.coords.listPi]][0] + 
         // matrix(c(rep(irow,length.listPi),rep(icol,length.listPi)),ncol=2)];
-          int lags_size = first_precond_lags.nrow();//normally == length_listPi
-          j.clear();
-          for(int k=0;k<lags_size;k++) {
-            int val=z(irow+first_precond_lags(k,0),icol+first_precond_lags(k,1));
-            j.push_back(val);
-          }
-          gi=first_precond["g"];
-    		} else {
+        //normally == length_listPi
+        j.clear();
+        //printf("vals=");
+        for(int k=0;k<first_precond_lags_size;k++) {
+          int val=z(irow+first_precond_lags(k,0),icol+first_precond_lags(k,1));
+          //printf(" %d",val);
+          j.push_back(val);
+        }
+        //printf("\n");
+        gi.resize(length_listPi);
+        gi.clear();
+        gi.insert(gi.end(),first_precond_g.begin(),first_precond_g.end());
+  		} else {
           //TO REDO!!!
           // listPi = as.vector(pdist( obj$non.missing.coords[iz,],
           // obj$non.missing.coords[max(1, iz - 2*obj$n1 - 2): iz,])@dist)<(precond.bandwidth/obj$n1)     
@@ -67,39 +84,47 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
           //max(1, iz - 2*obj$n1 - 2)
           int iz_from=iz-2*n1-2;
           if(iz_from<0) iz_from=0;
+          //printf("iz_from=%d\n",iz_from);
 
           j.clear();
-          for(int iz_cur=iz_from;iz_cur<iz;iz_cur++) {
+          //printf("dmax=%lf,rdist=",dmax);
+          for(int iz_cur=iz_from;iz_cur<=iz;iz_cur++) {
             double d=sqrt(sum(pow(non_missing_coords(iz,_)-non_missing_coords(iz_cur,_),2)));
-            if(d<dmax) j.push_back(iz_cur);//already added iz_from
+            //printf(" %lf",d);
+            if(d<dmax) j.push_back(iz_cur+1);//already added iz_from
           }
+          //printf("\n");
 
           if ( j.size()==1 ) {
             gi.resize(1);
             gi[0]=1;
             length_listPi = 1;
-    		} else {
-          length_listPi=j.size();
-          //compute all Euclidian distance
-          //NumericMatrix distSites(length_listPi,length_listPi);
+    		  } else {
+            length_listPi=j.size();
+            //compute all Euclidian distance
+            //NumericMatrix distSites(length_listPi,length_listPi);
           // rdist(obj$non.missing.coords[j,])
           // subR=matern(distSites,range,nu);
 
           arma::mat subR(length_listPi,length_listPi);
+          //printf("length_listPi=%d,dist=",length_listPi);
           for(int k1=0;k1<length_listPi;k1++) {
-            for(int k2=0;k1<k2;k2++) {
+            for(int k2=0;k2<k1;k2++) {
               double d=sqrt(sum(pow(non_missing_coords(k1,_)-non_missing_coords(k2,_),2)));
+              //printf("(%d,%d)=%lf ",k1,k2,d);
               double val=matern(d,range,nu);
               subR(k1,k2) = val;
               subR(k2,k1) = val;
             }
             subR(k1,k1)=1; //If I am not mistaken!
           }
+          //printf("\n");
 
           arma::colvec vectorEmi(length_listPi);
           vectorEmi[length_listPi-1]=1;
           //Armadillo
-          arma::vec gTildai=arma::inv(subR) * vectorEmi;
+          //arma::vec gTildai=arma::inv(subR) * vectorEmi;
+          arma::vec gTildai=arma::solve(subR,vectorEmi);
           gi.resize(length_listPi);
           double sqrtGTildaiLast=sqrt(gTildai[length_listPi-1]);
           for(int k=0;k<length_listPi;k++) gi[k]=gTildai(k)/sqrtGTildaiLast;
