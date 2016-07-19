@@ -4,10 +4,10 @@ using namespace Rcpp;
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-double matern(double d, double range = 1, double nu = 0.5) {
+double matern(double d, double range=1, double nu=.5) {
 
     d  = d / range; //iterator
-    if(abs(d) < 1e-10) d=1e-10;//+test abs < 1e-10
+    if(fabs(d) < 1e-10) d=1e-10;//+test abs < 1e-10
 
     double con = pow(2,nu - 1) * gamma(nu);
     con = 1./con;
@@ -91,7 +91,7 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
           for(int iz_cur=iz_from;iz_cur<=iz;iz_cur++) {
             double d=sqrt(sum(pow(non_missing_coords(iz,_)-non_missing_coords(iz_cur,_),2)));
             //printf(" %lf",d);
-            if(d<dmax) j.push_back(iz_cur+1);//already added iz_from
+            if(d<dmax) j.push_back(iz_cur+1);//R (index)
           }
           //printf("\n");
 
@@ -107,18 +107,19 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
           // subR=matern(distSites,range,nu);
 
           arma::mat subR(length_listPi,length_listPi);
-          //printf("length_listPi=%d,dist=",length_listPi);
+          printf("length_listPi=%d,dist=",length_listPi);
           for(int k1=0;k1<length_listPi;k1++) {
             for(int k2=0;k2<k1;k2++) {
-              double d=sqrt(sum(pow(non_missing_coords(k1,_)-non_missing_coords(k2,_),2)));
-              //printf("(%d,%d)=%lf ",k1,k2,d);
+              double d=sqrt(sum(pow(non_missing_coords(j[k1]-1,_)-non_missing_coords(j[k2]-1,_),2)));
+              printf("(%d,%d)=(%lf,",j[k1]-1,j[k2]-1,d);
               double val=matern(d,range,nu);
+              printf("%lf) ",val);
               subR(k1,k2) = val;
               subR(k2,k1) = val;
             }
             subR(k1,k1)=1; //If I am not mistaken!
           }
-          //printf("\n");
+          printf("\n");
 
           arma::colvec vectorEmi(length_listPi);
           vectorEmi[length_listPi-1]=1;
