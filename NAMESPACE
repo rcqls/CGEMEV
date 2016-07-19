@@ -1,4 +1,4 @@
-#useDynLib(CGEMEV)
+useDynLib(CGEMEV)
 
 # Export all names
 exportPattern(".")
