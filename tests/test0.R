@@ -9,5 +9,6 @@ ex1.md <- list(
 ex2.md  <- c(ex1.md,list(center=c(0.8, 0.25),radius=0.03568))
 
 # gd=grid.domain
-ex1.gd <- grid.domain(ex1.md,64)
+cat("n=",ngrid<-1024,"\n")
+print(system.time(ex1.gd <- grid.domain(ex1.md,ngrid)))
 #tmp <- preconditioning2.grid.domain(ex1.gd)
