@@ -34,3 +34,38 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// belong_to_disk
+bool belong_to_disk(NumericVector x, NumericVector center, double rad2);
+RcppExport SEXP CGEMEV_belong_to_disk(SEXP xSEXP, SEXP centerSEXP, SEXP rad2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type center(centerSEXP);
+    Rcpp::traits::input_parameter< double >::type rad2(rad2SEXP);
+    __result = Rcpp::wrap(belong_to_disk(x, center, rad2));
+    return __result;
+END_RCPP
+}
+// missing_sites_grid_domain
+LogicalVector missing_sites_grid_domain(Environment obj);
+RcppExport SEXP CGEMEV_missing_sites_grid_domain(SEXP objSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< Environment >::type obj(objSEXP);
+    __result = Rcpp::wrap(missing_sites_grid_domain(obj));
+    return __result;
+END_RCPP
+}
+// distant_sites_grid_domain
+LogicalVector distant_sites_grid_domain(Environment obj);
+RcppExport SEXP CGEMEV_distant_sites_grid_domain(SEXP objSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< Environment >::type obj(objSEXP);
+    __result = Rcpp::wrap(distant_sites_grid_domain(obj));
+    return __result;
+END_RCPP
+}

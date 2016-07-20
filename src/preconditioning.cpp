@@ -196,3 +196,85 @@ List preconditioning_info(Environment obj,Function first_preconditioning, double
 //   }
 //   return(list(entriesRaw,colindicesRaw,rowpointersRaw))
 // }
+
+//belong.to.disk  <- function(x, center, halfDiameter.power2) t(dif <- x - center) %*% dif  < halfDiameter.power2
+
+// [[Rcpp::export]]
+bool belong_to_disk(NumericVector x,NumericVector center, double rad2) {
+  return (sum(pow(x-center,2)) < rad2);
+}
+
+// [[Rcpp::export]]
+LogicalVector missing_sites_grid_domain(Environment obj) {
+    int n1=obj["n1"];
+ 	  int n1Xn1=n1*n1;
+    int n_doms=obj["n.domains"];
+    LogicalVector missing_sites(n1Xn1);
+    NumericMatrix coords=obj["coords"];
+    List missing_domains=obj["missing.domains"];
+    for(int id=0;id<n_doms;id++) {
+      List md=missing_domains[id];
+      NumericVector center=md["center"];
+      double rad2=pow(md["radius"],2);
+      for(int ip=0;ip<n1Xn1;ip++) if(!missing_sites[ip]) missing_sites[ip]=belong_to_disk(coords(ip,_),center,rad2);
+    }
+    return missing_sites;
+}
+
+
+// missing.sites.grid.domain <- function(obj) {
+// 	n1Xn1  <- obj$n1*obj$n1
+// 	missing.sites <- rep(FALSE,  n1Xn1)
+// 	for(indexPixel in 1:n1Xn1) for(id in 1:obj$n.domains) missing.sites[indexPixel] <- missing.sites[indexPixel] | any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$center,obj$missing.domains[[id]]$radius^2 ))
+// 	# OLD: listOfbelong.to.OneOfTheDisks. Rmk: matrix in R can be used as a vector since it is actually a vector
+// 	obj$missing.sites <- matrix(missing.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
+// }
+
+// [[Rcpp::export]]
+LogicalVector distant_sites_grid_domain(Environment obj) {
+  int n1=obj["n1"];
+  int n1Xn1=n1*n1;
+  int n_doms=obj["n.domains"];
+  double oss=obj["oversampling.size"];
+	double hwn=oss/(double)n1;
+  int rhw=round(oss);
+
+  LogicalVector distant_sites(n1Xn1);
+  NumericMatrix coords=obj["coords"];
+  List missing_domains=obj["missing.domains"];
+  int ip;
+
+  for(int id=0;id<n_doms;id++) {
+    List md=missing_domains[id];
+    NumericVector center=md["center"];
+    double arad2=md["radius"];
+    arad2=pow(arad2+hwn,2);
+
+    for(int i=rhw;i<n1-rhw;i++) for(int j=rhw;j<n1-rhw;j++)  {
+    		ip=j+i*n1;
+        //printf("id=%d,ip=%d,dist=%d,belong=%d\n",id,ip,distant_sites[ip],belong_to_disk(coords(ip,_),center,arad2));
+        if(id==0 || distant_sites[ip]) distant_sites[ip]=!belong_to_disk(coords(ip,_),center,arad2);
+    }
+  }
+  return distant_sites;
+}
+
+// distant.sites.grid.domain <- function(obj) {
+// 	n1Xn1  <- obj$n1*obj$n1
+//
+//
+// 	halfWidthNeighborood  <-  obj$oversampling.size/obj$n1
+// 	augmentedRadius  <-  sapply(obj$missing.domains,function(md) md$radius + halfWidthNeighborood)
+//
+//   roundHalfWidth  <-  round(obj$oversampling.size)
+// 	distant.sites <- rep(FALSE,  n1Xn1)
+// 	for(i in (roundHalfWidth+1):(obj$n1-roundHalfWidth)) for(j in (roundHalfWidth+1):(obj$n1-roundHalfWidth))  {
+// 		indexPixel <- j + (i-1)*obj$n1
+//     tmp <- TRUE
+// 		for(id in 1:obj$n.domains) tmp <- tmp & !any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$center,augmentedRadius[id]^2 ))
+//     distant.sites[indexPixel] <- tmp
+// 	}
+//
+// 	# OLD: listOfDistantEnoughPixels.from.BoundaryAndTheDisks
+// 	obj$distant.sites <- matrix(distant.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
+// }

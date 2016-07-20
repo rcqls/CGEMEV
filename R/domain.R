@@ -27,13 +27,24 @@ grid.domain  <- function(missing.domains,grid.size=256,oversampling.size=2.5,dim
 	obj
 }
 
-update.grid.domain <-function(obj,Rcpp=TRUE) {
-	missing.sites.grid.domain(obj)
-	distant.sites.grid.domain(obj)
-	non.missing.coords.grid.domain(obj)
-	non.missing.number.grid.domain(obj)
-  expand.to.full.grid.domain(obj)
-  print(system.time(if(Rcpp) preconditioningCpp.grid.domain(obj) else preconditioningR.grid.domain(obj)))
+update.grid.domain <-function(obj,Rcpp=TRUE,profile=FALSE) {
+  if(profile) {
+    print(system.time(if(Rcpp) missing.sitesCpp.grid.domain(obj) else missing.sites.grid.domain(obj)))
+  	print(system.time(if(Rcpp) distant.sitesCpp.grid.domain(obj)  else distant.sites.grid.domain(obj)))
+    print(system.time(distant.sitesCpp.grid.domain(obj)))
+  	print(system.time(non.missing.coords.grid.domain(obj)))
+  	print(system.time(non.missing.number.grid.domain(obj)))
+    print(system.time(expand.to.full.grid.domain(obj)))
+    print(system.time(if(Rcpp) preconditioningCpp.grid.domain(obj) else preconditioningR.grid.domain(obj)))
+  } else {
+    if(Rcpp) missing.sitesCpp.grid.domain(obj) else missing.sites.grid.domain(obj)
+  	if(Rcpp) distant.sitesCpp.grid.domain(obj)  else distant.sites.grid.domain(obj)
+    distant.sitesCpp.grid.domain(obj)
+  	non.missing.coords.grid.domain(obj)
+  	non.missing.number.grid.domain(obj)
+    expand.to.full.grid.domain(obj)
+    if(Rcpp) preconditioningCpp.grid.domain(obj) else preconditioningR.grid.domain(obj)
+  }
 }
 
 missing.sites.grid.domain <- function(obj) {
@@ -42,6 +53,10 @@ missing.sites.grid.domain <- function(obj) {
 	for(indexPixel in 1:n1Xn1) for(id in 1:obj$n.domains) missing.sites[indexPixel] <- missing.sites[indexPixel] | any(belong.to.disk(obj$coords[indexPixel,] ,  obj$missing.domains[[id]]$center,obj$missing.domains[[id]]$radius^2 ))
 	# OLD: listOfbelong.to.OneOfTheDisks. Rmk: matrix in R can be used as a vector since it is actually a vector
 	obj$missing.sites <- matrix(missing.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
+}
+
+missing.sitesCpp.grid.domain <- function(obj) {
+	obj$missing.sites <- matrix(missing_sites_grid_domain(obj),nrow=obj$grid.size[1],ncol=obj$grid.size[2])
 }
 
 distant.sites.grid.domain <- function(obj) {
@@ -62,6 +77,10 @@ distant.sites.grid.domain <- function(obj) {
 
 	# OLD: listOfDistantEnoughPixels.from.BoundaryAndTheDisks
 	obj$distant.sites <- matrix(distant.sites,nrow=obj$grid.size[1],ncol=obj$grid.size[2])
+}
+
+distant.sitesCpp.grid.domain <- function(obj) {
+	obj$distant.sites <- matrix(distant_sites_grid_domain(obj),nrow=obj$grid.size[1],ncol=obj$grid.size[2])
 }
 
 # OLD: observationSitesWithMissingDisk
